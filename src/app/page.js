@@ -1,66 +1,48 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+import Link from 'next/link';
 
 export default function Home() {
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.js file.</h1>
+    <main>
+      {/* Hero Section */}
+      <section className="hero">
+        <div className="container hero-content">
+          <h1>Experience the Ultimate Ride</h1>
+          <p>Discover premium bicycles and accessories tailored for every journey.</p>
+          <div className="hero-buttons">
+            <Link href="/bikes" className="btn-primary">Explore Bikes</Link>
+            <Link href="/contact" className="btn-secondary">Contact Us</Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Section */}
+      <section className="featured container">
+        <h2>Featured Categories</h2>
+        <div className="category-grid">
+          <Link href="/bikes" className="card category-card">
+            <div className="card-image-placeholder bikes-bg"></div>
+            <h3>Premium Bikes</h3>
+            <p>From mountain to city commutes, find your perfect match.</p>
+          </Link>
+          <Link href="/helmets" className="card category-card">
+            <div className="card-image-placeholder helmets-bg"></div>
+            <h3>Safety Helmets</h3>
+            <p>Top-tier protection without compromising on style.</p>
+          </Link>
+        </div>
+      </section>
+
+      {/* About Teaser */}
+      <section className="about-teaser container">
+        <div className="glass p-8 rounded-lg">
+          <h2>Why Choose SK Bikes?</h2>
           <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
+            With years of experience and a passion for cycling, we bring you only the best. 
+            Our expert team is here to help you gear up for your next adventure.
           </p>
+          <Link href="/about" className="text-link">Read our story &rarr;</Link>
         </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      </section>
+    </main>
   );
 }
