@@ -14,7 +14,7 @@ export default function ContactPage() {
             
             <div style={{ marginBottom: "1rem" }}>
               <h4 style={{ marginBottom: "0.25rem" }}>Address:</h4>
-              <p style={{ color: "var(--text-muted)" }}>123 Bike Lane, Colombo, Sri Lanka</p>
+              <p style={{ color: "var(--text-muted)" }}>123 Motorcycle Lane, Colombo, Sri Lanka</p>
             </div>
             
             <div style={{ marginBottom: "1rem" }}>
@@ -24,7 +24,7 @@ export default function ContactPage() {
             
             <div style={{ marginBottom: "1rem" }}>
               <h4 style={{ marginBottom: "0.25rem" }}>Email:</h4>
-              <p style={{ color: "var(--text-muted)" }}>info@skbikes.lk</p>
+              <p style={{ color: "var(--text-muted)" }}>skbikekurunegala@gmail.com</p>
             </div>
           </div>
         </div>

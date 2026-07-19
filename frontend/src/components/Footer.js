@@ -17,20 +17,21 @@ export default function Footer() {
       padding: "3rem 2rem 1.5rem",
       marginTop: "auto"
     }}>
-      <div className="container" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "2rem", marginBottom: "2rem" }}>
+      <div className="container" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "2rem", marginBottom: "2rem" }}>
         <div>
           <h3 style={{ color: "var(--primary)", marginBottom: "1rem" }}>SK Bikes</h3>
           <p style={{ color: "var(--text-muted)", fontSize: "0.95rem" }}>
-            Your premium destination for high-quality bicycles and safety gear in Sri Lanka.
+            Your premium destination for high-quality motorcycles and safety gear in Sri Lanka.
           </p>
         </div>
         <div>
           <h4 style={{ marginBottom: "1rem" }}>Quick Links</h4>
           <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: "0.5rem", color: "var(--text-muted)" }}>
-            <li><a href="/bikes">All Bikes</a></li>
+            <li><a href="/bikes">All Motorcycles</a></li>
             <li><a href="/helmets">Helmets</a></li>
             <li><a href="/about">About Us</a></li>
             <li><a href="/contact">Contact</a></li>
+            <li><a href="/admin" style={{ color: "var(--primary)" }}>Admin Login</a></li>
           </ul>
         </div>
         <div>
@@ -38,7 +39,7 @@ export default function Footer() {
           <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: "0.5rem", color: "var(--text-muted)" }}>
             <li>+94 77 123 4567</li>
             <li>info@skbikes.lk</li>
-            <li>123 Bike Lane, Colombo</li>
+            <li>123 Motorcycle Lane, Colombo</li>
           </ul>
         </div>
       </div>

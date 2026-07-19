@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
 export default function AdminLogin() {
@@ -13,24 +12,37 @@ export default function AdminLogin() {
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
         router.push("/admin/dashboard");
       } else {
         setLoading(false);
       }
+    };
+    checkUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        router.push("/admin/dashboard");
+      }
     });
-    return () => unsubscribe();
+
+    return () => subscription.unsubscribe();
   }, [router]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (signInError) throw signInError;
       router.push("/admin/dashboard");
     } catch (err) {
-      setError("Failed to login. Please check your credentials.");
+      setError(err.message || "Failed to login. Please check your credentials.");
       console.error(err);
     }
   };

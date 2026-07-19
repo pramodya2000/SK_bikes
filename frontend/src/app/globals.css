@@ -1,0 +1,287 @@
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --primary: #f97316;
+  --primary-hover: #ea580c;
+  --secondary: #2563eb;
+  --card-bg: #ffffff;
+  --border: #e5e7eb;
+  --text-muted: #6b7280;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+    --card-bg: #171717;
+    --border: #262626;
+    --text-muted: #a3a3a3;
+  }
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  font-family: var(--font-sans);
+  background-color: var(--background);
+  color: var(--foreground);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+}
+
+/* ===== UTILITIES ===== */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  display: inline-block;
+}
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  border: 2px solid white;
+  transition: all 0.2s ease;
+  display: inline-block;
+}
+.btn-secondary:hover {
+  background-color: white;
+  color: var(--foreground);
+}
+
+/* ===== CARD ===== */
+.card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+}
+
+.glass {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* ===== TYPOGRAPHY ===== */
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 1rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+p {
+  margin-bottom: 1rem;
+  color: var(--text-muted);
+}
+
+/* ===== HERO ===== */
+.hero {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  background: linear-gradient(135deg, rgba(23,23,23,0.9) 0%, rgba(23,23,23,0.7) 100%),
+    url('https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+  color: white;
+  text-align: center;
+  padding: 4rem 1.5rem;
+}
+.hero-content {
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+}
+.hero h1 {
+  font-size: 3.5rem;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(to right, #fff, var(--primary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.hero p {
+  font-size: 1.25rem;
+  color: #e5e7eb;
+  margin-bottom: 2.5rem;
+}
+.hero-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* ===== FEATURED SECTION ===== */
+.featured {
+  padding: 5rem 1.5rem;
+}
+.featured h2 {
+  text-align: center;
+  font-size: 2.5rem;
+  margin-bottom: 3rem;
+}
+
+/* ===== CATEGORY GRID ===== */
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .category-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+  }
+}
+/* ===== HOME CATEGORIES ===== */
+.home-categories {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 3rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .home-categories {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+.category-card {
+  display: block;
+  text-align: center;
+}
+.category-card h3 {
+  margin: 1.5rem 0 0.5rem;
+  font-size: 1.5rem;
+}
+.category-card p {
+  padding: 0 1rem 1.5rem;
+}
+
+/* ===== CARD IMAGE ===== */
+.card-image-placeholder {
+  height: 220px;
+  background-size: cover;
+  background-position: center;
+  background-color: var(--card-bg);
+}
+.bikes-bg {
+  background-image: url('https://images.unsplash.com/photo-1558981403-c5f9899a28bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80');
+}
+.helmets-bg {
+  background-image: url('/helmet_product.png');
+  background-color: #1a1a1a;
+}
+
+/* ===== ABOUT TEASER ===== */
+.about-teaser {
+  padding: 4rem 1.5rem;
+  text-align: center;
+}
+
+/* ===== MISC ===== */
+.text-link { color: var(--primary); font-weight: 600; }
+.text-link:hover { text-decoration: underline; }
+.p-8 { padding: 2rem; }
+.rounded-lg { border-radius: 1rem; }
+
+/* ===== NAVBAR RESPONSIVE ===== */
+.desktop-nav { display: flex; }
+.hamburger { display: none !important; }
+
+/* ===== MOBILE BREAKPOINTS ===== */
+@media (max-width: 768px) {
+
+  /* Navbar */
+  .desktop-nav { display: none !important; }
+  .hamburger { display: flex !important; }
+
+  /* Hero */
+  .hero {
+    min-height: 60vh;
+    padding: 3rem 1.25rem;
+  }
+  .hero h1 { font-size: 2.2rem; }
+  .hero p { font-size: 1rem; }
+  .hero-buttons { flex-direction: column; align-items: center; }
+  .hero-buttons a, .hero-buttons button { width: 100%; text-align: center; }
+
+  /* Featured */
+  .featured { padding: 3rem 1.25rem; }
+  .featured h2 { font-size: 1.8rem; }
+
+  /* Category grid */
+  .category-grid { grid-template-columns: 1fr; gap: 1.25rem; }
+
+  /* Card image smaller on mobile */
+  .card-image-placeholder { height: 180px; }
+
+  /* Container padding */
+  .container { padding: 0 1rem; }
+
+  /* General section padding */
+  main.container { padding: 2rem 1rem !important; }
+
+  /* About page grid */
+  div[style*="gridTemplateColumns: \"repeat(auto-fit"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Bike/Helmet detail page */
+  div[style*="gridTemplateColumns: \"1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Adjust font sizes */
+  h1[style*="2.5rem"] { font-size: 1.8rem !important; }
+  h1[style*="3rem"] { font-size: 2rem !important; }
+}
+
+@media (max-width: 480px) {
+  .hero h1 { font-size: 1.8rem; }
+  .featured h2 { font-size: 1.5rem; }
+  .card-image-placeholder { height: 160px; }
+  .btn-primary, .btn-secondary { padding: 0.65rem 1.25rem; font-size: 0.95rem; }
+}

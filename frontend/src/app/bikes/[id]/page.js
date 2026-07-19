@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 
 export default function BikeDetailsPage() {
@@ -20,14 +19,16 @@ export default function BikeDetailsPage() {
     async function fetchBike() {
       if (!params.id) return;
       try {
-        const docRef = doc(db, "bikes", params.id);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-          setBike({ id: docSnap.id, ...docSnap.data() });
+        const { data, error } = await supabase.from("bikes").select("*").eq("id", params.id).single();
+        if (error) {
+          if (error.code === 'PGRST116') {
+            console.log("No such document!");
+            setBike(null);
+          } else {
+            throw error;
+          }
         } else {
-          console.log("No such document!");
-          setBike(null);
+          setBike(data);
         }
       } catch (error) {
         console.error("Error fetching bike details: ", error);
@@ -46,20 +47,20 @@ export default function BikeDetailsPage() {
   if (!bike) {
     return (
       <main className="container" style={{ padding: "4rem 2rem", textAlign: "center" }}>
-        <h2>Bike Not Found</h2>
-        <p>The bike you are looking for does not exist.</p>
-        <Link href="/bikes" className="text-link">&larr; Back to Bikes</Link>
+        <h2>Motorcycle Not Found</h2>
+        <p>The motorcycle you are looking for does not exist.</p>
+        <Link href="/bikes" className="text-link">&larr; Back to Motorcycles</Link>
       </main>
     );
   }
 
-  const whatsappMessage = encodeURIComponent(`Hi, I am interested in the bike: ${bike.name} (${bike.model}). Please provide more details.`);
+  const whatsappMessage = encodeURIComponent(`Hi, I am interested in the motorcycle: ${bike.name} (${bike.model}). Please provide more details.`);
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappMessage}`;
   const phoneUrl = `tel:${PHONE_NUMBER}`;
 
   return (
     <main className="container" style={{ padding: "4rem 2rem" }}>
-      <Link href="/bikes" className="text-link" style={{ display: "inline-block", marginBottom: "2rem" }}>&larr; Back to Bikes</Link>
+      <Link href="/bikes" className="text-link" style={{ display: "inline-block", marginBottom: "2rem" }}>&larr; Back to Motorcycles</Link>
       
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "3rem" }}>
         {/* Bike Image */}
@@ -68,7 +69,7 @@ export default function BikeDetailsPage() {
              style={{ 
                width: "100%", 
                height: "100%", 
-               backgroundImage: `url(${bike.imageUrl || 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'})`,
+               backgroundImage: `url(${bike.imageUrl || 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'})`,
                backgroundSize: "cover",
                backgroundPosition: "center"
              }}

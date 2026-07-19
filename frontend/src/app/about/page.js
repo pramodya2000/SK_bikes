@@ -7,11 +7,11 @@ export default function AboutPage() {
         <div className="card" style={{ padding: "3rem", marginBottom: "3rem" }}>
           <h2 style={{ marginBottom: "1.5rem", color: "var(--primary)" }}>Our Story</h2>
           <p style={{ fontSize: "1.1rem", lineHeight: "1.8", marginBottom: "1.5rem" }}>
-            Founded with a passion for cycling, SK Bikes has grown into a premier destination for cycling enthusiasts. 
-            We believe that a bicycle is more than just a mode of transportation; it's a lifestyle, a fitness journey, and a way to connect with the world.
+            Founded with a passion for riding, SK Bikes has grown into a premier destination for motorcycle enthusiasts. 
+            We believe that a motorcycle is more than just a mode of transportation; it's a lifestyle, a fitness journey, and a way to connect with the world.
           </p>
           <p style={{ fontSize: "1.1rem", lineHeight: "1.8" }}>
-            Our mission is to provide the highest quality bicycles, helmets, and gear to riders of all levels. Whether you are a daily commuter, a weekend warrior, or a professional racer, we have the perfect ride for you.
+            Our mission is to provide the highest quality motorcycles, helmets, and gear to riders of all levels. Whether you are a daily commuter, a weekend warrior, or a professional racer, we have the perfect ride for you.
           </p>
         </div>
 
