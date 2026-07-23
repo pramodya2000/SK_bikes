@@ -50,9 +50,9 @@ export default function AdminLogin() {
   if (loading) return <main className="container" style={{ padding: "4rem 2rem", textAlign: "center" }}><p>Loading...</p></main>;
 
   return (
-    <main className="container" style={{ padding: "4rem 2rem", minHeight: "80vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
-      <div className="card" style={{ padding: "3rem", width: "100%", maxWidth: "450px" }}>
-        <h1 style={{ textAlign: "center", marginBottom: "2rem", color: "var(--primary)" }}>Admin Login</h1>
+    <main className="container" style={{ padding: "2rem 1rem", minHeight: "80vh", display: "flex", justifyContent: "center", alignItems: "center" }}>
+      <div className="card admin-login-card" style={{ padding: "3rem", width: "100%", maxWidth: "450px" }}>
+        <h1 style={{ textAlign: "center", marginBottom: "2rem", color: "var(--primary)", fontSize: "1.8rem" }}>Admin Login</h1>
         
         {error && <div style={{ backgroundColor: "#fee2e2", color: "#b91c1c", padding: "1rem", borderRadius: "8px", marginBottom: "1.5rem" }}>{error}</div>}
         
@@ -79,7 +79,7 @@ export default function AdminLogin() {
               required 
             />
           </div>
-          <button type="submit" className="btn-primary" style={{ marginTop: "1rem" }}>Login</button>
+          <button type="submit" className="btn-primary" style={{ marginTop: "1rem", width: "100%", textAlign: "center" }}>Login</button>
         </form>
       </div>
     </main>

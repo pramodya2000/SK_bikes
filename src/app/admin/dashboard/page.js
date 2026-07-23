@@ -163,35 +163,35 @@ export default function AdminDashboard() {
   const inputStyle = { width: "100%", padding: "0.75rem", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--background)", color: "var(--foreground)" };
 
   return (
-    <main style={{ display: "flex", minHeight: "100vh", backgroundColor: "var(--background)" }}>
+    <main className="admin-container">
       {/* Sidebar */}
-      <aside style={{ width: "250px", backgroundColor: "var(--card-bg)", borderRight: "1px solid var(--border)", padding: "2rem" }}>
-        <h2 style={{ color: "var(--primary)", marginBottom: "3rem" }}>Admin Panel</h2>
-        <nav style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+      <aside className="admin-sidebar">
+        <h2 className="admin-sidebar-header">Admin Panel</h2>
+        <nav className="admin-sidebar-nav">
           <button 
             onClick={() => handleTabChange("bikes")}
-            style={{ padding: "1rem", textAlign: "left", backgroundColor: activeTab === "bikes" ? "var(--primary)" : "transparent", color: activeTab === "bikes" ? "white" : "var(--foreground)", borderRadius: "8px", border: "1px solid var(--border)", fontWeight: "600" }}
+            className={`admin-sidebar-btn ${activeTab === "bikes" ? "active" : ""}`}
           >
-            Manage Motorcycles
+            🏍️ Manage Motorcycles
           </button>
           <button 
             onClick={() => handleTabChange("helmets")}
-            style={{ padding: "1rem", textAlign: "left", backgroundColor: activeTab === "helmets" ? "var(--primary)" : "transparent", color: activeTab === "helmets" ? "white" : "var(--foreground)", borderRadius: "8px", border: "1px solid var(--border)", fontWeight: "600" }}
+            className={`admin-sidebar-btn ${activeTab === "helmets" ? "active" : ""}`}
           >
-            Manage Helmets
+            🪖 Manage Helmets
           </button>
           <button 
             onClick={handleLogout}
-            style={{ padding: "1rem", textAlign: "left", backgroundColor: "#fee2e2", color: "#b91c1c", borderRadius: "8px", border: "1px solid #fca5a5", fontWeight: "600", marginTop: "auto" }}
+            className="admin-logout-btn"
           >
-            Logout
+            🚪 Logout
           </button>
         </nav>
       </aside>
 
       {/* Main Content */}
-      <div style={{ flex: 1, padding: "3rem", overflowY: "auto" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "3rem" }}>
+      <div className="admin-content">
+        <div className="admin-page-header">
           <h1 style={{ textTransform: "capitalize" }}>Manage {activeTab}</h1>
           {!isEditing && <button onClick={() => setIsEditing(true)} className="btn-primary">+ Add New</button>}
         </div>
@@ -200,7 +200,7 @@ export default function AdminDashboard() {
           <div className="card" style={{ padding: "2rem" }}>
             <h2 style={{ marginBottom: "2rem" }}>{editId ? "Edit" : "Add New"} {activeTab === "bikes" ? "Motorcycle" : "Helmet"}</h2>
             <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
+              <div className="admin-form-grid">
                 <div>
                   <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "600" }}>Name</label>
                   <input type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} style={inputStyle} required />
@@ -218,25 +218,27 @@ export default function AdminDashboard() {
               {/* Image Upload Section */}
               <div>
                 <label style={{ display: "block", marginBottom: "0.75rem", fontWeight: "600" }}>Product Image</label>
-                <div style={{ display: "flex", gap: "1.5rem", alignItems: "flex-start" }}>
+                <div className="admin-image-upload-wrapper">
                   {/* Preview Box */}
                   <div 
+                    className="admin-image-preview"
                     onClick={() => imagePreview && setFullSizeImage(imagePreview)}
                     title={imagePreview ? "Click to view full size" : ""}
                     style={{
-                    width: "160px", height: "160px", borderRadius: "12px",
-                    border: "2px dashed var(--border)", flexShrink: 0,
-                    backgroundImage: imagePreview ? `url(${imagePreview})` : "none",
-                    backgroundSize: "contain", backgroundPosition: "center", backgroundRepeat: "no-repeat",
-                    backgroundColor: "var(--card-bg)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    overflow: "hidden", cursor: imagePreview ? "pointer" : "default"
-                  }}>
+                      width: "160px", height: "160px", borderRadius: "12px",
+                      border: "2px dashed var(--border)", flexShrink: 0,
+                      backgroundImage: imagePreview ? `url(${imagePreview})` : "none",
+                      backgroundSize: "contain", backgroundPosition: "center", backgroundRepeat: "no-repeat",
+                      backgroundColor: "var(--card-bg)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      overflow: "hidden", cursor: imagePreview ? "pointer" : "default"
+                    }}
+                  >
                     {!imagePreview && <span style={{ color: "var(--text-muted)", fontSize: "0.85rem", textAlign: "center", padding: "0.5rem" }}>No image selected</span>}
                   </div>
 
                   {/* Upload Controls */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", flex: 1 }}>
                     <input
                       ref={fileInputRef}
                       type="file"
@@ -283,7 +285,7 @@ export default function AdminDashboard() {
                 </div>
               )}
 
-              <div style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
+              <div className="admin-form-actions">
                 <button type="submit" className="btn-primary" disabled={uploading}>
                   {uploading ? "Please wait..." : "Save Changes"}
                 </button>
@@ -297,30 +299,33 @@ export default function AdminDashboard() {
               <p style={{ color: "var(--text-muted)" }}>No items found. Click 'Add New' to create one.</p>
             ) : (
               items.map(item => (
-                <div key={item.id} className="card" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem", transition: "all 0.3s ease" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
+                <div key={item.id} className="card admin-item-card" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem", transition: "all 0.3s ease" }}>
+                  <div className="admin-item-card-header">
                     
                     {/* Left Side: Thumbnail & Title */}
-                    <div style={{ display: "flex", alignItems: "center", gap: "1.25rem", cursor: "pointer", flex: 1, minWidth: "250px" }} onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}>
+                    <div className="admin-item-info" onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}>
                       {/* Thumbnail */}
                       <div 
                         onClick={(e) => { e.stopPropagation(); setFullSizeImage(item.imageUrl || '/helmet_product.png'); }}
                         title="Click to view full size"
                         style={{
-                        width: "70px", height: "70px", borderRadius: "10px",
-                        backgroundImage: `url(${item.imageUrl || '/helmet_product.png'})`,
-                        backgroundSize: "contain", backgroundPosition: "center", backgroundRepeat: "no-repeat",
-                        backgroundColor: "var(--card-bg)", flexShrink: 0,
-                        border: "1px solid var(--border)", cursor: "zoom-in"
-                      }} />
-                      <div>
-                        <h3 style={{ marginBottom: "0.25rem" }}>{item.name} <span style={{ fontSize: "0.9rem", color: "var(--text-muted)", fontWeight: "normal" }}>({item.model})</span></h3>
-                        <p style={{ color: "var(--primary)", fontWeight: "600" }}>Rs. {item.price}</p>
+                          width: "65px", height: "65px", borderRadius: "10px",
+                          backgroundImage: `url(${item.imageUrl || '/helmet_product.png'})`,
+                          backgroundSize: "contain", backgroundPosition: "center", backgroundRepeat: "no-repeat",
+                          backgroundColor: "var(--card-bg)", flexShrink: 0,
+                          border: "1px solid var(--border)", cursor: "zoom-in"
+                        }}
+                      />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <h3 style={{ marginBottom: "0.25rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {item.name} <span style={{ fontSize: "0.9rem", color: "var(--text-muted)", fontWeight: "normal" }}>({item.model})</span>
+                        </h3>
+                        <p style={{ color: "var(--primary)", fontWeight: "600", margin: 0 }}>Rs. {item.price}</p>
                       </div>
                     </div>
 
                     {/* Right Side: Actions */}
-                    <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", flexShrink: 0 }}>
+                    <div className="admin-item-actions">
                       <button 
                         onClick={() => setExpandedId(expandedId === item.id ? null : item.id)} 
                         style={{ padding: "0.5rem 0.75rem", background: "none", color: "var(--text-muted)", fontSize: "0.9rem", fontWeight: "600" }}
@@ -334,7 +339,7 @@ export default function AdminDashboard() {
 
                   {/* Expanded Details Section */}
                   {expandedId === item.id && (
-                    <div style={{ marginTop: "0.5rem", paddingTop: "1rem", borderTop: "1px solid var(--border)", color: "var(--text-muted)", fontSize: "0.95rem", display: "grid", gap: "1.5rem" }}>
+                    <div style={{ marginTop: "0.5rem", paddingTop: "1rem", borderTop: "1px solid var(--border)", color: "var(--text-muted)", fontSize: "0.95rem", display: "grid", gap: "1.5rem", overflowWrap: "anywhere", wordBreak: "break-word" }}>
                       <div>
                         <strong style={{ color: "var(--foreground)", display: "block", marginBottom: "0.5rem" }}>📝 Description:</strong>
                         <p style={{ margin: 0, whiteSpace: "pre-wrap", lineHeight: "1.6" }}>{item.description}</p>
@@ -366,7 +371,7 @@ export default function AdminDashboard() {
             position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
             backgroundColor: "rgba(0,0,0,0.85)", zIndex: 1000,
             display: "flex", justifyContent: "center", alignItems: "center",
-            padding: "2rem", cursor: "zoom-out",
+            padding: "1rem", cursor: "zoom-out",
             backdropFilter: "blur(5px)"
           }}
         >
@@ -374,9 +379,9 @@ export default function AdminDashboard() {
           <button 
             onClick={(e) => { e.stopPropagation(); setFullSizeImage(null); }}
             style={{
-              position: "absolute", top: "20px", right: "30px",
+              position: "absolute", top: "15px", right: "20px",
               background: "none", border: "none", color: "white",
-              fontSize: "3rem", cursor: "pointer", lineHeight: "1",
+              fontSize: "2.5rem", cursor: "pointer", lineHeight: "1",
               padding: "10px", opacity: 0.8, transition: "opacity 0.2s"
             }}
             onMouseOver={(e) => e.target.style.opacity = 1}
@@ -390,7 +395,7 @@ export default function AdminDashboard() {
             src={fullSizeImage} 
             alt="Full size preview" 
             style={{ 
-              maxWidth: "100%", maxHeight: "100%", 
+              maxWidth: "100%", maxHeight: "90vh", 
               objectFit: "contain", borderRadius: "12px",
               backgroundColor: "white", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.5)",
               cursor: "default"
