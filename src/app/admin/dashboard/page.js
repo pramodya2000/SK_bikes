@@ -20,6 +20,7 @@ export default function AdminDashboard() {
   const [imagePreview, setImagePreview] = useState(null);
   const [fullSizeImage, setFullSizeImage] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   const fileInputRef = useRef(null);
   
   const router = useRouter();
@@ -71,7 +72,6 @@ export default function AdminDashboard() {
         return;
       }
 
-      // Bikes and Helmets
       const { data, error } = await supabase.from(collectionName).select("*");
       if (error) throw error;
       setItems(data || []);
@@ -85,6 +85,7 @@ export default function AdminDashboard() {
     fetchItems(tab);
     resetForm();
     setExpandedId(null);
+    setMenuOpen(false);
   };
 
   const handleLogout = async () => {
@@ -102,7 +103,6 @@ export default function AdminDashboard() {
 
   const toggleMessageStatus = async (id, currentStatus) => {
     const newStatus = currentStatus === "read" ? "unread" : "read";
-
     const { error } = await supabase.from("messages").update({ status: newStatus }).eq("id", id);
     if (error) {
       console.error("Error updating message status:", error);
@@ -126,16 +126,14 @@ export default function AdminDashboard() {
     setImagePreview(item.imageUrl || null);
   };
 
-  // Handle image file upload to Supabase Storage
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Show local preview immediately
     const localUrl = URL.createObjectURL(file);
     setImagePreview(localUrl);
-
     setUploading(true);
+
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}.${fileExt}`;
@@ -147,11 +145,7 @@ export default function AdminDashboard() {
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
-      const { data } = supabase.storage
-        .from('product-images')
-        .getPublicUrl(filePath);
-
+      const { data } = supabase.storage.from('product-images').getPublicUrl(filePath);
       setFormData(prev => ({ ...prev, imageUrl: data.publicUrl }));
       setImagePreview(data.publicUrl);
     } catch (error) {
@@ -166,20 +160,13 @@ export default function AdminDashboard() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Strip id/created_at from data before saving
       const { id, created_at, ...cleanData } = formData;
-      
-      // The 'helmets' table doesn't have an advancedDetails column
-      if (activeTab === "helmets") {
-        delete cleanData.advancedDetails;
-      }
+      if (activeTab === "helmets") delete cleanData.advancedDetails;
 
       if (editId) {
-        // UPDATE existing item
         const { error } = await supabase.from(activeTab).update(cleanData).eq('id', editId);
         if (error) throw error;
       } else {
-        // INSERT new item
         const { error } = await supabase.from(activeTab).insert([cleanData]);
         if (error) throw error;
       }
@@ -195,7 +182,15 @@ export default function AdminDashboard() {
   if (loading) return <main style={{ padding: "4rem", textAlign: "center" }}>Loading...</main>;
   if (!user) return null;
 
-  const inputStyle = { width: "100%", padding: "0.75rem", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--background)", color: "var(--foreground)" };
+  const inputStyle = {
+    width: "100%",
+    padding: "0.75rem",
+    borderRadius: "8px",
+    border: "1px solid var(--border)",
+    background: "var(--background)",
+    color: "var(--foreground)",
+    boxSizing: "border-box",
+  };
 
   const sqlScriptText = `CREATE TABLE IF NOT EXISTS messages (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -222,36 +217,40 @@ CREATE POLICY "Allow authenticated delete" ON messages FOR DELETE USING (auth.ro
     <main className="admin-container">
       {/* Sidebar */}
       <aside className="admin-sidebar">
-        <h2 className="admin-sidebar-header">Admin Panel</h2>
-        <nav className="admin-sidebar-nav">
-          <button 
+        <div className="admin-sidebar-header">
+          <h2 style={{ margin: 0, fontSize: "1.1rem" }}>🏍️ Admin Panel</h2>
+          <button
+            className="admin-menu-toggle"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Toggle menu"
+          >
+            {menuOpen ? "✕" : "☰"}
+          </button>
+        </div>
+
+        <nav className={`admin-sidebar-nav ${menuOpen ? "open" : ""}`}>
+          <button
             onClick={() => handleTabChange("bikes")}
             className={`admin-sidebar-btn ${activeTab === "bikes" ? "active" : ""}`}
           >
-            🏍️ Manage Motorcycles
+            🏍️ Motorcycles
           </button>
-          <button 
+          <button
             onClick={() => handleTabChange("helmets")}
             className={`admin-sidebar-btn ${activeTab === "helmets" ? "active" : ""}`}
           >
-            🪖 Manage Helmets
+            🪖 Helmets
           </button>
-          <button 
+          <button
             onClick={() => handleTabChange("messages")}
-            className={`admin-sidebar-btn ${activeTab === "messages" ? "active" : ""}`}
-            style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
+            className={`admin-sidebar-btn admin-msg-btn ${activeTab === "messages" ? "active" : ""}`}
           >
-            <span>📩 Customer Messages</span>
+            <span>📩 Messages</span>
             {unreadCount > 0 && (
-              <span style={{ backgroundColor: "#ef4444", color: "white", borderRadius: "9999px", padding: "0.15rem 0.5rem", fontSize: "0.75rem", fontWeight: "bold" }}>
-                {unreadCount}
-              </span>
+              <span className="admin-unread-badge">{unreadCount}</span>
             )}
           </button>
-          <button 
-            onClick={handleLogout}
-            className="admin-logout-btn"
-          >
+          <button onClick={handleLogout} className="admin-logout-btn">
             🚪 Logout
           </button>
         </nav>
@@ -260,141 +259,137 @@ CREATE POLICY "Allow authenticated delete" ON messages FOR DELETE USING (auth.ro
       {/* Main Content */}
       <div className="admin-content">
         <div className="admin-page-header">
-          <h1 style={{ textTransform: "capitalize" }}>
+          <h1 style={{ textTransform: "capitalize", fontSize: "clamp(1.2rem, 4vw, 1.8rem)", margin: 0 }}>
             {activeTab === "messages" ? "Customer Messages" : `Manage ${activeTab}`}
           </h1>
           {activeTab !== "messages" && !isEditing && (
-            <button onClick={() => setIsEditing(true)} className="btn-primary">+ Add New</button>
+            <button onClick={() => setIsEditing(true)} className="btn-primary">
+              + Add New
+            </button>
           )}
         </div>
 
         {/* MESSAGES TAB */}
         {activeTab === "messages" ? (
-          <div style={{ display: "grid", gap: "1rem" }}>
+          <div className="admin-cards-grid">
             {dbTableError && (
-              <div style={{ backgroundColor: "#fff7ed", border: "2px dashed #f97316", padding: "1.5rem", borderRadius: "12px", color: "#c2410c", marginBottom: "1rem" }}>
-                <h3 style={{ margin: "0 0 0.5rem 0", color: "#c2410c", fontSize: "1.2rem" }}>
-                  ⚠️ Supabase 'messages' Table Missing in Database!
-                </h3>
-                <p style={{ margin: "0 0 1rem 0", fontSize: "0.95rem", lineHeight: "1.5" }}>
-                  Your Supabase cloud database does not have the <code>messages</code> table yet. 
-                  Copy the SQL script below and paste it into your <strong>Supabase Dashboard → SQL Editor → Run</strong> to enable message saving:
+              <div className="admin-db-error-box">
+                <h3>⚠️ Supabase &apos;messages&apos; Table Missing!</h3>
+                <p>
+                  Copy the SQL below and run it in{" "}
+                  <strong>Supabase Dashboard → SQL Editor → Run</strong>:
                 </p>
-                <textarea 
-                  readOnly 
-                  rows={8} 
+                <textarea
+                  readOnly
+                  rows={8}
                   value={sqlScriptText}
-                  style={{ width: "100%", padding: "0.85rem", fontFamily: "monospace", fontSize: "0.85rem", borderRadius: "8px", border: "1px solid #fed7aa", backgroundColor: "#fff" }}
+                  style={{ width: "100%", padding: "0.85rem", fontFamily: "monospace", fontSize: "0.8rem", borderRadius: "8px", border: "1px solid #fed7aa", backgroundColor: "#fff", boxSizing: "border-box", resize: "vertical" }}
                 />
-                <button 
-                  onClick={() => { navigator.clipboard.writeText(sqlScriptText); alert("📋 SQL Script copied to clipboard! Paste and Run it in Supabase SQL Editor."); }}
-                  className="btn-primary" 
-                  style={{ marginTop: "1rem", fontSize: "0.9rem", padding: "0.6rem 1.25rem" }}
+                <button
+                  onClick={() => { navigator.clipboard.writeText(sqlScriptText); alert("📋 SQL Script copied!"); }}
+                  className="btn-primary"
+                  style={{ marginTop: "0.75rem" }}
                 >
-                  📋 Copy SQL Setup Script
+                  📋 Copy SQL Script
                 </button>
               </div>
             )}
 
-            {!dbTableError && items.length === 0 ? (
+            {!dbTableError && items.length === 0 && (
               <p style={{ color: "var(--text-muted)" }}>No customer messages found.</p>
-            ) : (
-              items.map(item => (
-                <div key={item.id} className="card admin-item-card" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem", transition: "all 0.3s ease" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem", flexWrap: "wrap" }}>
-                    <div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.25rem" }}>
-                        <h3 style={{ margin: 0 }}>{item.name}</h3>
-                        <span style={{
-                          fontSize: "0.75rem", padding: "0.2rem 0.6rem", borderRadius: "12px",
-                          fontWeight: "bold", textTransform: "uppercase",
-                          backgroundColor: item.status === "unread" ? "#fee2e2" : "#e0f2fe",
-                          color: item.status === "unread" ? "#b91c1c" : "#0369a1"
-                        }}>
-                          {item.status || "unread"}
-                        </span>
-                      </div>
-                      <p style={{ margin: 0, color: "var(--primary)", fontWeight: "500", fontSize: "0.95rem" }}>
-                        ✉️ <a href={`mailto:${item.email}`} style={{ textDecoration: "underline" }}>{item.email}</a>
-                      </p>
-                      <small style={{ color: "var(--text-muted)", display: "block", marginTop: "0.25rem" }}>
-                        📅 {item.created_at ? new Date(item.created_at).toLocaleString() : "N/A"}
-                      </small>
-                    </div>
+            )}
 
-                    <div className="admin-item-actions">
-                      <a 
-                        href={`mailto:${item.email}?subject=Response from SK Bikes`} 
-                        className="btn-primary" 
-                        style={{ padding: "0.5rem 0.85rem", fontSize: "0.85rem", textDecoration: "none" }}
-                      >
-                        ✉️ Reply
-                      </a>
-                      <button 
-                        onClick={() => toggleMessageStatus(item.id, item.status)} 
-                        style={{ padding: "0.5rem 0.85rem", backgroundColor: "var(--border)", color: "var(--foreground)", borderRadius: "6px", fontWeight: "600", fontSize: "0.85rem" }}
-                      >
-                        {item.status === "read" ? "Mark Unread" : "Mark Read"}
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(item.id)} 
-                        style={{ padding: "0.5rem 0.85rem", backgroundColor: "#fee2e2", color: "#b91c1c", borderRadius: "6px", fontWeight: "600", fontSize: "0.85rem" }}
-                      >
-                        Delete
-                      </button>
+            {items.map(item => (
+              <div key={item.id} className="card admin-msg-card">
+                <div className="admin-msg-card-top">
+                  <div className="admin-msg-card-meta">
+                    <div className="admin-msg-name-row">
+                      <h3 style={{ margin: 0, fontSize: "1rem" }}>{item.name}</h3>
+                      <span className={`admin-status-badge ${item.status === "unread" ? "unread" : "read"}`}>
+                        {item.status || "unread"}
+                      </span>
                     </div>
+                    <p style={{ margin: "0.25rem 0 0", fontSize: "0.9rem" }}>
+                      ✉️{" "}
+                      <a href={`mailto:${item.email}`} style={{ color: "var(--primary)", textDecoration: "underline" }}>
+                        {item.email}
+                      </a>
+                    </p>
+                    <small style={{ color: "var(--text-muted)" }}>
+                      📅 {item.created_at ? new Date(item.created_at).toLocaleString() : "N/A"}
+                    </small>
                   </div>
 
-                  <div style={{ paddingTop: "0.75rem", borderTop: "1px solid var(--border)", color: "var(--foreground)", whiteSpace: "pre-wrap", lineHeight: "1.6", overflowWrap: "anywhere", wordBreak: "break-word" }}>
-                    {item.message}
+                  <div className="admin-msg-actions">
+                    <a
+                      href={`mailto:${item.email}?subject=Response from SK Bikes`}
+                      className="btn-primary"
+                      style={{ textDecoration: "none", fontSize: "0.85rem", padding: "0.45rem 0.85rem" }}
+                    >
+                      ✉️ Reply
+                    </a>
+                    <button
+                      onClick={() => toggleMessageStatus(item.id, item.status)}
+                      className="admin-action-btn"
+                    >
+                      {item.status === "read" ? "Mark Unread" : "Mark Read"}
+                    </button>
+                    <button
+                      onClick={() => handleDelete(item.id)}
+                      className="admin-action-btn danger"
+                    >
+                      Delete
+                    </button>
                   </div>
                 </div>
-              ))
-            )}
+
+                <div className="admin-msg-body">
+                  {item.message}
+                </div>
+              </div>
+            ))}
           </div>
         ) : isEditing ? (
           /* PRODUCT ADD/EDIT FORM */
-          <div className="card" style={{ padding: "2rem" }}>
-            <h2 style={{ marginBottom: "2rem" }}>{editId ? "Edit" : "Add New"} {activeTab === "bikes" ? "Motorcycle" : "Helmet"}</h2>
-            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+          <div className="card" style={{ padding: "1.5rem" }}>
+            <h2 style={{ marginBottom: "1.5rem", fontSize: "clamp(1rem, 3vw, 1.4rem)" }}>
+              {editId ? "Edit" : "Add New"} {activeTab === "bikes" ? "Motorcycle" : "Helmet"}
+            </h2>
+            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
               <div className="admin-form-grid">
                 <div>
-                  <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "600" }}>Name</label>
+                  <label className="admin-form-label">Name</label>
                   <input type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} style={inputStyle} required />
                 </div>
                 <div>
-                  <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "600" }}>Model</label>
+                  <label className="admin-form-label">Model</label>
                   <input type="text" value={formData.model} onChange={(e) => setFormData({...formData, model: e.target.value})} style={inputStyle} required />
                 </div>
                 <div>
-                  <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "600" }}>Price (Rs.)</label>
+                  <label className="admin-form-label">Price (Rs.)</label>
                   <input type="text" value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} style={inputStyle} required />
                 </div>
               </div>
 
-              {/* Image Upload Section */}
+              {/* Image Upload */}
               <div>
-                <label style={{ display: "block", marginBottom: "0.75rem", fontWeight: "600" }}>Product Image</label>
+                <label className="admin-form-label">Product Image</label>
                 <div className="admin-image-upload-wrapper">
-                  {/* Preview Box */}
-                  <div 
+                  <div
                     className="admin-image-preview"
                     onClick={() => imagePreview && setFullSizeImage(imagePreview)}
                     title={imagePreview ? "Click to view full size" : ""}
-                    style={{
-                      width: "160px", height: "160px", borderRadius: "12px",
-                      border: "2px dashed var(--border)", flexShrink: 0,
-                      backgroundImage: imagePreview ? `url(${imagePreview})` : "none",
-                      backgroundSize: "contain", backgroundPosition: "center", backgroundRepeat: "no-repeat",
-                      backgroundColor: "var(--card-bg)",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      overflow: "hidden", cursor: imagePreview ? "pointer" : "default"
-                    }}
                   >
-                    {!imagePreview && <span style={{ color: "var(--text-muted)", fontSize: "0.85rem", textAlign: "center", padding: "0.5rem" }}>No image selected</span>}
+                    {!imagePreview && (
+                      <span style={{ color: "var(--text-muted)", fontSize: "0.8rem", textAlign: "center", padding: "0.5rem" }}>
+                        No image
+                      </span>
+                    )}
+                    {imagePreview && (
+                      <img src={imagePreview} alt="preview" style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: "10px" }} />
+                    )}
                   </div>
 
-                  {/* Upload Controls */}
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", flex: 1 }}>
                     <input
                       ref={fileInputRef}
@@ -407,10 +402,11 @@ CREATE POLICY "Allow authenticated delete" ON messages FOR DELETE USING (auth.ro
                     <label
                       htmlFor="image-upload"
                       style={{
-                        display: "inline-block", padding: "0.75rem 1.5rem",
+                        display: "block", padding: "0.75rem 1rem", textAlign: "center",
                         backgroundColor: uploading ? "var(--border)" : "var(--primary)",
-                        color: "white", borderRadius: "8px", cursor: uploading ? "not-allowed" : "pointer",
-                        fontWeight: "600", textAlign: "center", transition: "opacity 0.2s"
+                        color: "white", borderRadius: "8px",
+                        cursor: uploading ? "not-allowed" : "pointer",
+                        fontWeight: "600", transition: "opacity 0.2s"
                       }}
                     >
                       {uploading ? "⏳ Uploading..." : "📁 Choose Image"}
@@ -421,24 +417,24 @@ CREATE POLICY "Allow authenticated delete" ON messages FOR DELETE USING (auth.ro
                         onClick={() => { setImagePreview(null); setFormData(f => ({...f, imageUrl: ""})); if(fileInputRef.current) fileInputRef.current.value = ""; }}
                         style={{ padding: "0.5rem 1rem", backgroundColor: "#fee2e2", color: "#b91c1c", borderRadius: "8px", border: "none", cursor: "pointer", fontWeight: "600" }}
                       >
-                        🗑️ Remove Image
+                        🗑️ Remove
                       </button>
                     )}
-                    {uploading && <p style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>Uploading image, please wait...</p>}
-                    {imagePreview && !uploading && <p style={{ color: "green", fontSize: "0.85rem" }}>✅ Image ready!</p>}
+                    {uploading && <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", margin: 0 }}>Uploading, please wait...</p>}
+                    {imagePreview && !uploading && <p style={{ color: "green", fontSize: "0.85rem", margin: 0 }}>✅ Image ready!</p>}
                   </div>
                 </div>
               </div>
 
               <div>
-                <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "600" }}>Description</label>
-                <textarea value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} rows="3" style={{ ...inputStyle }} required></textarea>
+                <label className="admin-form-label">Description</label>
+                <textarea value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} rows="3" style={inputStyle} required />
               </div>
 
               {activeTab === "bikes" && (
                 <div>
-                  <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "600" }}>Advanced Details</label>
-                  <textarea value={formData.advancedDetails} onChange={(e) => setFormData({...formData, advancedDetails: e.target.value})} rows="4" style={{ ...inputStyle }}></textarea>
+                  <label className="admin-form-label">Advanced Details</label>
+                  <textarea value={formData.advancedDetails} onChange={(e) => setFormData({...formData, advancedDetails: e.target.value})} rows="4" style={inputStyle} />
                 </div>
               )}
 
@@ -446,67 +442,83 @@ CREATE POLICY "Allow authenticated delete" ON messages FOR DELETE USING (auth.ro
                 <button type="submit" className="btn-primary" disabled={uploading}>
                   {uploading ? "Please wait..." : "Save Changes"}
                 </button>
-                <button type="button" onClick={resetForm} className="btn-secondary" style={{ borderColor: "var(--border)", color: "var(--foreground)" }}>Cancel</button>
+                <button type="button" onClick={resetForm} className="btn-secondary" style={{ borderColor: "var(--border)", color: "var(--foreground)" }}>
+                  Cancel
+                </button>
               </div>
             </form>
           </div>
         ) : (
           /* PRODUCT CARDS LIST */
-          <div style={{ display: "grid", gap: "1rem" }}>
+          <div className="admin-cards-grid">
             {items.length === 0 ? (
-              <p style={{ color: "var(--text-muted)" }}>No items found. Click 'Add New' to create one.</p>
+              <p style={{ color: "var(--text-muted)" }}>No items found. Click &apos;Add New&apos; to create one.</p>
             ) : (
               items.map(item => (
-                <div key={item.id} className="card admin-item-card" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem", transition: "all 0.3s ease" }}>
+                <div key={item.id} className="card admin-item-card">
                   <div className="admin-item-card-header">
-                    
-                    {/* Left Side: Thumbnail & Title */}
+
+                    {/* Left: Thumbnail & Title */}
                     <div className="admin-item-info" onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}>
-                      {/* Thumbnail */}
-                      <div 
+                      <div
                         onClick={(e) => { e.stopPropagation(); setFullSizeImage(item.imageUrl || '/helmet_product.png'); }}
                         title="Click to view full size"
-                        style={{
-                          width: "65px", height: "65px", borderRadius: "10px",
-                          backgroundImage: `url(${item.imageUrl || '/helmet_product.png'})`,
-                          backgroundSize: "contain", backgroundPosition: "center", backgroundRepeat: "no-repeat",
-                          backgroundColor: "var(--card-bg)", flexShrink: 0,
-                          border: "1px solid var(--border)", cursor: "zoom-in"
-                        }}
+                        className="admin-item-thumb"
+                        style={{ backgroundImage: `url(${item.imageUrl || '/helmet_product.png'})` }}
                       />
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <h3 style={{ marginBottom: "0.25rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {item.name} <span style={{ fontSize: "0.9rem", color: "var(--text-muted)", fontWeight: "normal" }}>({item.model})</span>
+                        <h3 className="admin-item-title">
+                          {item.name}{" "}
+                          <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: "normal" }}>
+                            ({item.model})
+                          </span>
                         </h3>
-                        <p style={{ color: "var(--primary)", fontWeight: "600", margin: 0 }}>Rs. {item.price}</p>
+                        <p style={{ color: "var(--primary)", fontWeight: "600", margin: 0, fontSize: "0.95rem" }}>
+                          Rs. {item.price}
+                        </p>
                       </div>
                     </div>
 
-                    {/* Right Side: Actions */}
+                    {/* Right: Actions */}
                     <div className="admin-item-actions">
-                      <button 
-                        onClick={() => setExpandedId(expandedId === item.id ? null : item.id)} 
-                        style={{ padding: "0.5rem 0.75rem", background: "none", color: "var(--text-muted)", fontSize: "0.9rem", fontWeight: "600" }}
+                      <button
+                        onClick={() => setExpandedId(expandedId === item.id ? null : item.id)}
+                        className="admin-action-btn"
                       >
-                        {expandedId === item.id ? "▲ Hide Info" : "▼ More Info"}
+                        {expandedId === item.id ? "▲ Hide" : "▼ More"}
                       </button>
-                      <button onClick={() => handleEdit(item)} style={{ padding: "0.5rem 1rem", backgroundColor: "#e0f2fe", color: "#0369a1", borderRadius: "6px", fontWeight: "600" }}>Edit</button>
-                      <button onClick={() => handleDelete(item.id)} style={{ padding: "0.5rem 1rem", backgroundColor: "#fee2e2", color: "#b91c1c", borderRadius: "6px", fontWeight: "600" }}>Delete</button>
+                      <button onClick={() => handleEdit(item)} className="admin-action-btn edit">
+                        Edit
+                      </button>
+                      <button onClick={() => handleDelete(item.id)} className="admin-action-btn danger">
+                        Delete
+                      </button>
                     </div>
                   </div>
 
-                  {/* Expanded Details Section */}
+                  {/* Expanded Details */}
                   {expandedId === item.id && (
-                    <div style={{ marginTop: "0.5rem", paddingTop: "1rem", borderTop: "1px solid var(--border)", color: "var(--text-muted)", fontSize: "0.95rem", display: "grid", gap: "1.5rem", overflowWrap: "anywhere", wordBreak: "break-word" }}>
+                    <div className="admin-item-expanded">
                       <div>
-                        <strong style={{ color: "var(--foreground)", display: "block", marginBottom: "0.5rem" }}>📝 Description:</strong>
-                        <p style={{ margin: 0, whiteSpace: "pre-wrap", lineHeight: "1.6" }}>{item.description}</p>
+                        <strong style={{ color: "var(--foreground)", display: "block", marginBottom: "0.4rem" }}>
+                          📝 Description:
+                        </strong>
+                        <p style={{ margin: 0, whiteSpace: "pre-wrap", lineHeight: "1.6", color: "var(--text-muted)" }}>
+                          {item.description}
+                        </p>
                       </div>
-                      
+
                       {item.advancedDetails && (
                         <div>
-                          <strong style={{ color: "var(--foreground)", display: "block", marginBottom: "0.5rem" }}>⚙️ Advanced Details:</strong>
-                          <div style={{ whiteSpace: "pre-wrap", fontFamily: "var(--font-sans)", backgroundColor: "var(--background)", padding: "1.25rem", borderRadius: "8px", border: "1px solid var(--border)", color: "var(--foreground)", lineHeight: "1.6" }}>
+                          <strong style={{ color: "var(--foreground)", display: "block", marginBottom: "0.4rem" }}>
+                            ⚙️ Advanced Details:
+                          </strong>
+                          <div style={{
+                            whiteSpace: "pre-wrap", backgroundColor: "var(--background)",
+                            padding: "1rem", borderRadius: "8px", border: "1px solid var(--border)",
+                            color: "var(--foreground)", lineHeight: "1.6", fontSize: "0.9rem",
+                            overflowWrap: "anywhere", wordBreak: "break-word"
+                          }}>
                             {item.advancedDetails}
                           </div>
                         </div>
@@ -522,43 +534,37 @@ CREATE POLICY "Allow authenticated delete" ON messages FOR DELETE USING (auth.ro
 
       {/* Full Size Image Modal */}
       {fullSizeImage && (
-        <div 
+        <div
           onClick={() => setFullSizeImage(null)}
-          title="Click anywhere to close"
           style={{
             position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
             backgroundColor: "rgba(0,0,0,0.85)", zIndex: 1000,
             display: "flex", justifyContent: "center", alignItems: "center",
-            padding: "1rem", cursor: "zoom-out",
-            backdropFilter: "blur(5px)"
+            padding: "1rem", cursor: "zoom-out", backdropFilter: "blur(5px)"
           }}
         >
-          {/* Close Button */}
-          <button 
+          <button
             onClick={(e) => { e.stopPropagation(); setFullSizeImage(null); }}
             style={{
               position: "absolute", top: "15px", right: "20px",
               background: "none", border: "none", color: "white",
-              fontSize: "2.5rem", cursor: "pointer", lineHeight: "1",
-              padding: "10px", opacity: 0.8, transition: "opacity 0.2s"
+              fontSize: "2.5rem", cursor: "pointer", padding: "10px",
+              opacity: 0.8, lineHeight: 1
             }}
-            onMouseOver={(e) => e.target.style.opacity = 1}
-            onMouseOut={(e) => e.target.style.opacity = 0.8}
-            title="Close preview"
           >
             &times;
           </button>
-          
-          <img 
-            src={fullSizeImage} 
-            alt="Full size preview" 
-            style={{ 
-              maxWidth: "100%", maxHeight: "90vh", 
+          <img
+            src={fullSizeImage}
+            alt="Full size preview"
+            style={{
+              maxWidth: "100%", maxHeight: "90vh",
               objectFit: "contain", borderRadius: "12px",
-              backgroundColor: "white", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.5)",
+              backgroundColor: "white",
+              boxShadow: "0 20px 25px -5px rgba(0,0,0,0.5)",
               cursor: "default"
-            }} 
-            onClick={(e) => e.stopPropagation()} /* Prevent closing when clicking the image itself */
+            }}
+            onClick={(e) => e.stopPropagation()}
           />
         </div>
       )}
