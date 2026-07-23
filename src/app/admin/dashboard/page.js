@@ -11,6 +11,8 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("bikes");
   const [items, setItems] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [dbTableError, setDbTableError] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({ name: "", model: "", price: "", description: "", imageUrl: "", advancedDetails: "" });
   const [editId, setEditId] = useState(null);
@@ -48,6 +50,28 @@ export default function AdminDashboard() {
 
   const fetchItems = async (collectionName) => {
     try {
+      if (collectionName === "messages") {
+        const { data, error } = await supabase
+          .from("messages")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          console.warn("Messages query error:", error);
+          setDbTableError(true);
+          setItems([]);
+          setUnreadCount(0);
+          return;
+        }
+
+        setDbTableError(false);
+        setItems(data || []);
+        const unread = (data || []).filter(m => m.status === 'unread').length;
+        setUnreadCount(unread);
+        return;
+      }
+
+      // Bikes and Helmets
       const { data, error } = await supabase.from(collectionName).select("*");
       if (error) throw error;
       setItems(data || []);
@@ -73,6 +97,17 @@ export default function AdminDashboard() {
       const { error } = await supabase.from(activeTab).delete().eq('id', id);
       if (error) console.error("Error deleting item:", error);
       else fetchItems(activeTab);
+    }
+  };
+
+  const toggleMessageStatus = async (id, currentStatus) => {
+    const newStatus = currentStatus === "read" ? "unread" : "read";
+
+    const { error } = await supabase.from("messages").update({ status: newStatus }).eq("id", id);
+    if (error) {
+      console.error("Error updating message status:", error);
+    } else {
+      fetchItems("messages");
     }
   };
 
@@ -162,6 +197,27 @@ export default function AdminDashboard() {
 
   const inputStyle = { width: "100%", padding: "0.75rem", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--background)", color: "var(--foreground)" };
 
+  const sqlScriptText = `CREATE TABLE IF NOT EXISTS messages (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  message TEXT NOT NULL,
+  status TEXT DEFAULT 'unread',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow public insert" ON messages;
+DROP POLICY IF EXISTS "Allow authenticated read" ON messages;
+DROP POLICY IF EXISTS "Allow authenticated update" ON messages;
+DROP POLICY IF EXISTS "Allow authenticated delete" ON messages;
+
+CREATE POLICY "Allow public insert" ON messages FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow authenticated read" ON messages FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "Allow authenticated update" ON messages FOR UPDATE USING (auth.role() = 'authenticated');
+CREATE POLICY "Allow authenticated delete" ON messages FOR DELETE USING (auth.role() = 'authenticated');`;
+
   return (
     <main className="admin-container">
       {/* Sidebar */}
@@ -181,6 +237,18 @@ export default function AdminDashboard() {
             🪖 Manage Helmets
           </button>
           <button 
+            onClick={() => handleTabChange("messages")}
+            className={`admin-sidebar-btn ${activeTab === "messages" ? "active" : ""}`}
+            style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
+          >
+            <span>📩 Customer Messages</span>
+            {unreadCount > 0 && (
+              <span style={{ backgroundColor: "#ef4444", color: "white", borderRadius: "9999px", padding: "0.15rem 0.5rem", fontSize: "0.75rem", fontWeight: "bold" }}>
+                {unreadCount}
+              </span>
+            )}
+          </button>
+          <button 
             onClick={handleLogout}
             className="admin-logout-btn"
           >
@@ -192,11 +260,100 @@ export default function AdminDashboard() {
       {/* Main Content */}
       <div className="admin-content">
         <div className="admin-page-header">
-          <h1 style={{ textTransform: "capitalize" }}>Manage {activeTab}</h1>
-          {!isEditing && <button onClick={() => setIsEditing(true)} className="btn-primary">+ Add New</button>}
+          <h1 style={{ textTransform: "capitalize" }}>
+            {activeTab === "messages" ? "Customer Messages" : `Manage ${activeTab}`}
+          </h1>
+          {activeTab !== "messages" && !isEditing && (
+            <button onClick={() => setIsEditing(true)} className="btn-primary">+ Add New</button>
+          )}
         </div>
 
-        {isEditing ? (
+        {/* MESSAGES TAB */}
+        {activeTab === "messages" ? (
+          <div style={{ display: "grid", gap: "1rem" }}>
+            {dbTableError && (
+              <div style={{ backgroundColor: "#fff7ed", border: "2px dashed #f97316", padding: "1.5rem", borderRadius: "12px", color: "#c2410c", marginBottom: "1rem" }}>
+                <h3 style={{ margin: "0 0 0.5rem 0", color: "#c2410c", fontSize: "1.2rem" }}>
+                  ⚠️ Supabase 'messages' Table Missing in Database!
+                </h3>
+                <p style={{ margin: "0 0 1rem 0", fontSize: "0.95rem", lineHeight: "1.5" }}>
+                  Your Supabase cloud database does not have the <code>messages</code> table yet. 
+                  Copy the SQL script below and paste it into your <strong>Supabase Dashboard → SQL Editor → Run</strong> to enable message saving:
+                </p>
+                <textarea 
+                  readOnly 
+                  rows={8} 
+                  value={sqlScriptText}
+                  style={{ width: "100%", padding: "0.85rem", fontFamily: "monospace", fontSize: "0.85rem", borderRadius: "8px", border: "1px solid #fed7aa", backgroundColor: "#fff" }}
+                />
+                <button 
+                  onClick={() => { navigator.clipboard.writeText(sqlScriptText); alert("📋 SQL Script copied to clipboard! Paste and Run it in Supabase SQL Editor."); }}
+                  className="btn-primary" 
+                  style={{ marginTop: "1rem", fontSize: "0.9rem", padding: "0.6rem 1.25rem" }}
+                >
+                  📋 Copy SQL Setup Script
+                </button>
+              </div>
+            )}
+
+            {!dbTableError && items.length === 0 ? (
+              <p style={{ color: "var(--text-muted)" }}>No customer messages found.</p>
+            ) : (
+              items.map(item => (
+                <div key={item.id} className="card admin-item-card" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem", transition: "all 0.3s ease" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem", flexWrap: "wrap" }}>
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.25rem" }}>
+                        <h3 style={{ margin: 0 }}>{item.name}</h3>
+                        <span style={{
+                          fontSize: "0.75rem", padding: "0.2rem 0.6rem", borderRadius: "12px",
+                          fontWeight: "bold", textTransform: "uppercase",
+                          backgroundColor: item.status === "unread" ? "#fee2e2" : "#e0f2fe",
+                          color: item.status === "unread" ? "#b91c1c" : "#0369a1"
+                        }}>
+                          {item.status || "unread"}
+                        </span>
+                      </div>
+                      <p style={{ margin: 0, color: "var(--primary)", fontWeight: "500", fontSize: "0.95rem" }}>
+                        ✉️ <a href={`mailto:${item.email}`} style={{ textDecoration: "underline" }}>{item.email}</a>
+                      </p>
+                      <small style={{ color: "var(--text-muted)", display: "block", marginTop: "0.25rem" }}>
+                        📅 {item.created_at ? new Date(item.created_at).toLocaleString() : "N/A"}
+                      </small>
+                    </div>
+
+                    <div className="admin-item-actions">
+                      <a 
+                        href={`mailto:${item.email}?subject=Response from SK Bikes`} 
+                        className="btn-primary" 
+                        style={{ padding: "0.5rem 0.85rem", fontSize: "0.85rem", textDecoration: "none" }}
+                      >
+                        ✉️ Reply
+                      </a>
+                      <button 
+                        onClick={() => toggleMessageStatus(item.id, item.status)} 
+                        style={{ padding: "0.5rem 0.85rem", backgroundColor: "var(--border)", color: "var(--foreground)", borderRadius: "6px", fontWeight: "600", fontSize: "0.85rem" }}
+                      >
+                        {item.status === "read" ? "Mark Unread" : "Mark Read"}
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(item.id)} 
+                        style={{ padding: "0.5rem 0.85rem", backgroundColor: "#fee2e2", color: "#b91c1c", borderRadius: "6px", fontWeight: "600", fontSize: "0.85rem" }}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+
+                  <div style={{ paddingTop: "0.75rem", borderTop: "1px solid var(--border)", color: "var(--foreground)", whiteSpace: "pre-wrap", lineHeight: "1.6", overflowWrap: "anywhere", wordBreak: "break-word" }}>
+                    {item.message}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        ) : isEditing ? (
+          /* PRODUCT ADD/EDIT FORM */
           <div className="card" style={{ padding: "2rem" }}>
             <h2 style={{ marginBottom: "2rem" }}>{editId ? "Edit" : "Add New"} {activeTab === "bikes" ? "Motorcycle" : "Helmet"}</h2>
             <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
@@ -294,6 +451,7 @@ export default function AdminDashboard() {
             </form>
           </div>
         ) : (
+          /* PRODUCT CARDS LIST */
           <div style={{ display: "grid", gap: "1rem" }}>
             {items.length === 0 ? (
               <p style={{ color: "var(--text-muted)" }}>No items found. Click 'Add New' to create one.</p>
